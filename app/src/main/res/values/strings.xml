@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">DisableScreenshotSound</string>
+    <string name="xposed_desc">屏蔽安卓原生截图音效 已测试Android14可用 其他版本请自行尝试</string>
+</resources>
