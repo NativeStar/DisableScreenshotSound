@@ -21,12 +21,15 @@ public class Hook implements IXposedHookLoadPackage {
             case Build.VERSION_CODES.VANILLA_ICE_CREAM:
                 hookAndroid15(lpparam);
                 break;
+            case 36://Android16
+                hookAndroid16(lpparam);
+                break;
             default:
                 XposedBridge.log("[DisableScreenshotSound] Unsupported android version,trying default method");
                 hookAndroid14(lpparam);
                 return;
         }
-        XposedBridge.log("[DisableScreenshotSound] Success! Current SDK version:"+Build.VERSION.SDK_INT);
+        XposedBridge.log("[DisableScreenshotSound] Success! Current SDK version:" + Build.VERSION.SDK_INT);
     }
 
     private void hookAndroid14(XC_LoadPackage.LoadPackageParam loadPackageParam) {
@@ -43,6 +46,23 @@ public class Hook implements IXposedHookLoadPackage {
                 }
             }
         });
+        try {
+            XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.MotoGlobalScreenshot$DisplayScreenshotSession$$ExternalSyntheticLambda1", loadPackageParam.classLoader, "run", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    Object screenshotControllerInstance = param.thisObject;
+                    int classId = screenshotControllerInstance.getClass().getDeclaredField("$r8$classId").getInt(screenshotControllerInstance);
+                    if(classId == 1 || classId == 2) {
+                        param.setResult(null);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("[DisableScreenshotSound]Not motorola device? skip special hook");
+            //release前移除
+            XposedBridge.log(e);
+        }
     }
 
     private void hookAndroid15(XC_LoadPackage.LoadPackageParam loadPackageParam) {
@@ -61,6 +81,16 @@ public class Hook implements IXposedHookLoadPackage {
         //阻止播放
         Class<?> soundControlImpl$PlayScreenshotSoundClass = XposedHelpers.findClass("com.android.systemui.screenshot.ScreenshotSoundControllerImpl$playScreenshotSound$2", loadPackageParam.classLoader);
         XposedHelpers.findAndHookMethod(soundControlImpl$PlayScreenshotSoundClass, "invokeSuspend", Object.class, new XC_MethodHook() {
+            @Override
+            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                super.beforeHookedMethod(param);
+                param.setResult(null);
+            }
+        });
+    }
+
+    private void hookAndroid16(XC_LoadPackage.LoadPackageParam loadPackageParam) {
+        XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.ScreenshotSoundControllerImpl$playScreenshotSound$2", loadPackageParam.classLoader, "invokeSuspend", Object.class, new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
                 super.beforeHookedMethod(param);
