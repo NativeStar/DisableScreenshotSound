@@ -46,6 +46,7 @@ public class Hook implements IXposedHookLoadPackage {
                 }
             }
         });
+        //适配摩托罗拉设备A14
         try {
             XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.MotoGlobalScreenshot$DisplayScreenshotSession$$ExternalSyntheticLambda1", loadPackageParam.classLoader, "run", new XC_MethodHook() {
                 @Override
