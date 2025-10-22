@@ -60,8 +60,6 @@ public class Hook implements IXposedHookLoadPackage {
             });
         } catch (Exception e) {
             XposedBridge.log("[DisableScreenshotSound]Not motorola device? skip special hook");
-            //release前移除
-            XposedBridge.log(e);
         }
     }
 
