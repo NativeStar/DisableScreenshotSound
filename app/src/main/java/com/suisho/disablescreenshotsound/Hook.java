@@ -12,22 +12,27 @@ import de.robv.android.xposed.XC_MethodHook;
 public class Hook implements IXposedHookLoadPackage {
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
-        if(!lpparam.packageName.contains("com.android.systemui")) return;
-        //Android版本适配
-        switch (Build.VERSION.SDK_INT) {
-            case Build.VERSION_CODES.UPSIDE_DOWN_CAKE:
-                hookAndroid14(lpparam);
-                break;
-            case Build.VERSION_CODES.VANILLA_ICE_CREAM:
-                hookAndroid15(lpparam);
-                break;
-            case 36://Android16
-                hookAndroid16(lpparam);
-                break;
-            default:
-                XposedBridge.log("[DisableScreenshotSound] Unsupported android version,trying default method");
-                hookAndroid14(lpparam);
-                return;
+        final String pkgName = lpparam.packageName;
+        if(pkgName.contains("com.android.systemui")) {
+            //Android版本适配
+            switch (Build.VERSION.SDK_INT) {
+                case Build.VERSION_CODES.UPSIDE_DOWN_CAKE:
+                    hookAndroid14(lpparam);
+                    break;
+                case Build.VERSION_CODES.VANILLA_ICE_CREAM:
+                    hookAndroid15(lpparam);
+                    break;
+                case 36://Android16
+                    hookAndroid16(lpparam);
+                    break;
+                default:
+                    XposedBridge.log("[DisableScreenshotSound] Unsupported android version,trying default method");
+                    hookAndroid14(lpparam);
+            }
+        }
+        //一加截屏
+        if(pkgName.contains("com.oplus.screenshot")) {
+            hookOnePlusScreenShot(lpparam);
         }
         XposedBridge.log("[DisableScreenshotSound] Success! Current SDK version:" + Build.VERSION.SDK_INT);
     }
@@ -89,12 +94,56 @@ public class Hook implements IXposedHookLoadPackage {
     }
 
     private void hookAndroid16(XC_LoadPackage.LoadPackageParam loadPackageParam) {
-        XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.ScreenshotSoundControllerImpl$playScreenshotSound$2", loadPackageParam.classLoader, "invokeSuspend", Object.class, new XC_MethodHook() {
-            @Override
-            protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                super.beforeHookedMethod(param);
-                param.setResult(null);
-            }
-        });
+        try {
+            XposedBridge.log("[DisableScreenshotSound]Trying hook com.android.systemui.screenshot.ScreenshotSoundControllerImpl$playScreenshotSound$2#invokeSuspend");
+            XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.ScreenshotSoundControllerImpl$playScreenshotSound$2", loadPackageParam.classLoader, "invokeSuspend", Object.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    param.setResult(null);
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("[DisableScreenshotSound]Hook 'com.android.systemui.screenshot.ScreenshotSoundControllerImpl$playScreenshotSound$2' failed:" + e.getMessage());
+        }
+        try {
+            XposedBridge.log("[DisableScreenshotSound]Trying hook com.android.systemui.screenshot.ScreenshotSoundControllerImpl#playScreenshotSound");
+            XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.ScreenshotSoundControllerImpl", loadPackageParam.classLoader, "playScreenshotSound", loadPackageParam.classLoader.loadClass("kotlin.coroutines.Continuation"), new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    param.setResult(null);
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("[DisableScreenshotSound]Hook 'com.android.systemui.screenshot.ScreenshotSoundControllerImpl#playScreenshotSound' failed:" + e.getMessage());
+        }
+        try {
+            XposedBridge.log("[DisableScreenshotSound]Trying hook com.android.systemui.screenshot.ScreenshotSoundControllerImpl#playScreenshotSoundAsync");
+            XposedHelpers.findAndHookMethod("com.android.systemui.screenshot.ScreenshotSoundControllerImpl", loadPackageParam.classLoader, "playScreenshotSoundAsync", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    param.setResult(null);
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("[DisableScreenshotSound]Hook 'com.android.systemui.screenshot.ScreenshotSoundControllerImpl#playScreenshotSoundAsync' failed:" + e.getMessage());
+        }
+    }
+
+    private void hookOnePlusScreenShot(XC_LoadPackage.LoadPackageParam loadPackageParam) {
+        try {
+            XposedBridge.log("[DisableScreenshotSound] Trying hook com.oneplus.screenshot.id.e#f");
+            XposedHelpers.findAndHookMethod("id.e", loadPackageParam.classLoader, "f", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    param.setResult(null);
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("[DisableScreenshotSound]Hook 'com.oneplus.screenshot.id.e#f' failed:" + e.getMessage());
+        }
     }
 }
