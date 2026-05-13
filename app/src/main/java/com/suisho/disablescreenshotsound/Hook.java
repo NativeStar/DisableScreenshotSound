@@ -145,5 +145,16 @@ public class Hook implements IXposedHookLoadPackage {
         } catch (Exception e) {
             XposedBridge.log("[DisableScreenshotSound]Hook 'com.oneplus.screenshot.id.e#f' failed:" + e.getMessage());
         }
+        try {
+            XposedHelpers.findAndHookMethod("com.oplus.screenshot.sound.e", loadPackageParam.classLoader, "f", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                    param.setResult(null);
+                }
+            });
+        } catch (Exception e) {
+            XposedBridge.log("[DisableScreenshotSound]Hook 'com.oneplus.screenshot.id.e#g' failed:" + e.getMessage());
+        }
     }
 }
